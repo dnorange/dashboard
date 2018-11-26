@@ -2,11 +2,11 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { translate } from 'react-i18next';
+import { inject } from 'mobx-react';
 
 import { Image } from 'components/Base';
 
 import styles from './index.scss';
-import { inject } from 'mobx-react/index';
 
 @translate()
 @inject(({ rootStore }) => ({
@@ -24,7 +24,9 @@ export default class AppImages extends Component {
   };
 
   render() {
-    const { apps, total, user, t } = this.props;
+    const {
+      apps, total, user, t
+    } = this.props;
 
     return (
       <div className={styles.appImages}>

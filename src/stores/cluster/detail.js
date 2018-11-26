@@ -9,7 +9,9 @@ export default class ClusterDetailStore extends Store {
   defaultStatus = ['active', 'stopped', 'ceased', 'pending', 'suspended'];
 
   @observable currentPage = 1;
+
   @observable isLoading = false;
+
   @observable cluster = {};
 
   // vmbase
@@ -21,6 +23,7 @@ export default class ClusterDetailStore extends Store {
   @observable clusterJobs = [];
 
   @observable modalType = '';
+
   @observable isModalOpen = false;
 
   @observable extendedRowKeys = [];
@@ -28,13 +31,17 @@ export default class ClusterDetailStore extends Store {
   @observable nodeType = '';
 
   @observable selectedNodeKeys = [];
+
   @observable selectedNodeIds = [];
 
   @observable selectedNodeRole = '';
 
   @observable currentNodePage = 1;
+
   @observable totalNodeCount = 0;
+
   @observable searchNode = '';
+
   @observable selectNodeStatus = '';
 
   @action
@@ -51,7 +58,9 @@ export default class ClusterDetailStore extends Store {
   @action
   fetch = async clusterId => {
     this.isLoading = true;
-    const result = await this.request.get(`clusters`, { cluster_id: clusterId });
+    const result = await this.request.get(`clusters`, {
+      cluster_id: clusterId
+    });
     this.cluster = _.get(result, 'cluster_set[0]', {});
     this.isLoading = false;
   };
@@ -65,7 +74,9 @@ export default class ClusterDetailStore extends Store {
       params.search_word = this.searchNode;
     }
     if (!params.status) {
-      params.status = this.selectNodeStatus ? this.selectNodeStatus : this.defaultStatus;
+      params.status = this.selectNodeStatus
+        ? this.selectNodeStatus
+        : this.defaultStatus;
     }
     if (this.nodeIds && this.nodeIds.length) {
       params.node_id = params.node_id || this.nodeIds;
@@ -82,8 +93,7 @@ export default class ClusterDetailStore extends Store {
       this.totalNodeCount = _.get(this.helmClusterNodes, 'length', 0);
     } else {
       const result = await this.request.get(`clusters/nodes`, params);
-      const nodes = _.get(result, 'cluster_node_set', []);
-      this.clusterNodes = nodes;
+      this.clusterNodes = _.get(result, 'cluster_node_set', []);
       this.totalNodeCount = _.get(result, 'total_count', 0);
     }
 
@@ -93,7 +103,11 @@ export default class ClusterDetailStore extends Store {
   // todo: inject clusterStore
   // fixme: table search, filter no effect
   @action
-  formatClusterNodes = ({ type, clusterStore = this.clusterStore, searchWord = '' }) => {
+  formatClusterNodes = ({
+    type,
+    clusterStore = this.clusterStore,
+    searchWord = ''
+  }) => {
     const { cluster_role_set, cluster_node_set } = this.cluster;
 
     if (_.isEmpty(cluster_role_set)) {
@@ -108,7 +122,9 @@ export default class ClusterDetailStore extends Store {
         return false;
       }
 
-      if (!roleItem.role.includes(`-${type}`)) return false;
+      if (!roleItem.role.includes(`-${type}`)) {
+        return false;
+      }
 
       const nodes = [];
       const status = {
@@ -116,7 +132,7 @@ export default class ClusterDetailStore extends Store {
         maxNumber: 0
       };
 
-      if (cluster_node_set) {
+      if (Array.isArray(cluster_node_set)) {
         cluster_node_set.forEach(nodeItem => {
           if (nodeItem.role !== roleItem.role) {
             return;
@@ -128,6 +144,7 @@ export default class ClusterDetailStore extends Store {
           }
 
           nodes.push(nodeItem);
+
           const nodeStatus = _.get(status, nodeItem.status);
           let number = 0;
           if (!nodeStatus) {
@@ -135,7 +152,9 @@ export default class ClusterDetailStore extends Store {
           } else {
             number = nodeStatus + 1;
           }
+
           status[nodeItem.status] = number;
+
           if (status.maxStatus === '') {
             status.maxStatus = nodeItem.status;
             status.maxNumber = number;
@@ -145,6 +164,7 @@ export default class ClusterDetailStore extends Store {
           }
         });
       }
+
       roleItem.nodes = nodes;
       roleItem.name = _.get(roleItem.role.split(`-${type}`), '[0]');
       roleItem.status = status.maxStatus;
@@ -169,6 +189,7 @@ export default class ClusterDetailStore extends Store {
   @action
   addNodes = async params => {
     // todo
+    // eslint-disable-next-line
     const res = await this.request.post('clusters/add_nodes', params);
   };
 
@@ -192,6 +213,7 @@ export default class ClusterDetailStore extends Store {
 
   @action
   deleteNodes = async params => {
+    // eslint-disable-next-line
     const res = await this.request.post('clusters/delete_nodes', params);
   };
 
@@ -217,10 +239,9 @@ export default class ClusterDetailStore extends Store {
 
   @action
   json2Yaml = str => {
-    let yamlStr = YAML.stringify(JSON.parse(str || '{}'));
-    yamlStr = yamlStr.replace(/^---\n/, '');
-    yamlStr = yamlStr.replace(/  (.*)/g, '$1');
-    return yamlStr;
+    const yamlStr = YAML.stringify(JSON.parse(str || '{}'));
+    // fixme : some helm app with leading strings will cause deploy error
+    return yamlStr.replace(/^---\n/, '').replace(/\s+(.*)/g, '$1');
   };
 
   @action
@@ -232,38 +253,6 @@ export default class ClusterDetailStore extends Store {
       this.formatClusterNodes({ type });
     }
   };
-
-  // @action
-  // onSearchNode = (isKubernetes, clusterStore) => async word => {
-  //   clusterStore.searchNode = word;
-  //   this.currentNodePage = 1;
-  //
-  //   const { cluster } = clusterStore;
-  //   const { cluster_id } = cluster;
-  //   if (!isKubernetes) {
-  //     await clusterStore.fetchNodes({ cluster_id, search_word: word });
-  //   } else {
-  //     await clusterStore.fetch(cluster_id);
-  //     this.fetchHelmNodes({
-  //       clusterStore,
-  //       type: this.nodeType,
-  //       searchWord: word
-  //     });
-  //   }
-  // };
-  //
-  // @action
-  // onClearNode = (isKubernetes, clusterStore) => async () => {
-  //   await this.onSearchNode(isKubernetes, clusterStore)('');
-  // };
-  //
-  // @action
-  // onRefreshNode = (isKubernetes, clusterStore) => async () => {
-  //   clusterStore.searchNode = '';
-  //   await this.onSearchNode(isKubernetes, clusterStore)('');
-  // };
-
-  ///
 
   @action
   onChangeSelectNodes = (rowKeys, rows) => {
@@ -291,11 +280,17 @@ export default class ClusterDetailStore extends Store {
 
   @action
   onRefreshNode = async () => {
-    const { isHelm, cluster } = this;
-    if (isHelm) {
-      await this.fetch(cluster.cluster_id);
+    const { cluster_id } = this.cluster;
+
+    this.isLoading = true;
+
+    if (this.isHelm) {
+      await this.fetch(cluster_id);
+    } else {
+      await this.fetchNodes({ cluster_id });
     }
-    await this.fetchNodes({ cluster_id: this.cluster.cluster_id });
+
+    this.isLoading = false;
   };
 
   @action
@@ -323,6 +318,6 @@ export default class ClusterDetailStore extends Store {
 
     this.cluster = {};
     this.helmClusterNodes = [];
-    this.clusterNodes = []
+    this.clusterNodes = [];
   };
 }

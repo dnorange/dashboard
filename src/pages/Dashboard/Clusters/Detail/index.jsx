@@ -5,11 +5,22 @@ import _, { capitalize } from 'lodash';
 import { translate } from 'react-i18next';
 import classnames from 'classnames';
 
-import { Icon, Popover, Modal, Select, CodeMirror } from 'components/Base';
-import Layout, { BackBtn, Grid, Section, Card, Panel, BreadCrumb, Dialog } from 'components/Layout';
+import {
+  Icon, Popover, Modal, Select, CodeMirror
+} from 'components/Base';
+import Layout, {
+  BackBtn,
+  Grid,
+  Section,
+  Card,
+  Panel,
+  BreadCrumb,
+  Dialog
+} from 'components/Layout';
 import Loading from 'components/Loading';
 import TimeAxis from 'components/TimeAxis';
 import ClusterCard from 'components/DetailCard/ClusterCard';
+
 import Helm from './Helm';
 import VMbase from './VMbase';
 
@@ -30,7 +41,7 @@ import styles from './index.scss';
 @observer
 export default class ClusterDetail extends Component {
   state = {
-    isLoading: false
+    isRuntimeTypeFetched: false
   };
 
   async componentDidMount() {
@@ -46,7 +57,6 @@ export default class ClusterDetail extends Component {
       match
     } = this.props;
     const { clusterId } = match.params;
-    this.setState({ isLoading: true });
 
     await clusterDetailStore.fetch(clusterId);
     await clusterDetailStore.fetchJobs(clusterId);
@@ -57,27 +67,22 @@ export default class ClusterDetail extends Component {
       await appStore.fetch(cluster.app_id);
       await appVersionStore.fetchAll({ app_id: cluster.app_id });
     }
+
     if (cluster.runtime_id) {
       await runtimeStore.fetch(cluster.runtime_id);
     }
+    this.setState({ isRuntimeTypeFetched: true });
+
     await clusterDetailStore.fetchNodes({
       cluster_id: clusterId,
       isHelm: runtimeStore.isK8s
     });
+
     clusterDetailStore.isHelm = runtimeStore.isK8s;
 
     if (!runtimeStore.isK8s) {
       await sshKeyStore.fetchKeyPairs({ owner: user.user_id });
     }
-    this.setState({ isLoading: false });
-    // if (!runtimeStore.isK8s) {
-    //   // vmbase
-    // } else {
-    //   clusterDetailStore.formatClusterNodes({
-    //     clusterStore,
-    //     type: 'Deployment'
-    //   });
-    // }
   }
 
   componentWillUnmount() {
@@ -85,7 +90,9 @@ export default class ClusterDetail extends Component {
     clusterDetailStore.reset();
   }
 
-  listenToJob = async ({ op, rtype, rid, values = {} }) => {
+  listenToJob = async ({
+    op, rtype, rid, values = {}
+  }) => {
     const { clusterStore, clusterDetailStore, match } = this.props;
     const { clusterId } = match.params;
     const { jobs } = clusterStore;
@@ -115,15 +122,19 @@ export default class ClusterDetail extends Component {
     }
 
     if (rtype === 'cluster_node') {
-      const curNodes = clusterDetailStore.clusterNodes.toJSON().map(node => node.node_id);
+      const curNodes = clusterDetailStore.clusterNodes
+        .toJSON()
+        .map(node => node.node_id);
 
       if (curNodes.includes(rid)) {
-        clusterDetailStore.clusterNodes = clusterDetailStore.clusterNodes.map(node => {
-          if (node.node_id === rid) {
-            Object.assign(node, status);
+        clusterDetailStore.clusterNodes = clusterDetailStore.clusterNodes.map(
+          node => {
+            if (node.node_id === rid) {
+              Object.assign(node, status);
+            }
+            return node;
           }
-          return node;
-        });
+        );
       }
     }
   };
@@ -146,7 +157,9 @@ export default class ClusterDetail extends Component {
   };
 
   renderModals() {
-    const { t, appVersionStore, clusterStore, clusterDetailStore } = this.props;
+    const {
+      t, appVersionStore, clusterStore, clusterDetailStore
+    } = this.props;
     const { modalType, isModalOpen, hideModal } = clusterStore;
     const handleTypes = ['cease', 'delete', 'start', 'stop', 'rollback'];
 
@@ -158,7 +171,12 @@ export default class ClusterDetail extends Component {
       const { clusterJobs } = clusterDetailStore;
 
       return (
-        <Dialog title={t('Activities')} isOpen={isModalOpen} onCancel={hideModal} noActions>
+        <Dialog
+          title={t('Activities')}
+          isOpen={isModalOpen}
+          onCancel={hideModal}
+          noActions
+        >
           <TimeAxis timeList={clusterJobs.toJSON()} />
         </Dialog>
       );
@@ -166,7 +184,12 @@ export default class ClusterDetail extends Component {
 
     if (modalType === 'parameters') {
       return (
-        <Modal title="Parameters" visible={isModalOpen} onCancel={hideModal} hideFooter>
+        <Modal
+          title="Parameters"
+          visible={isModalOpen}
+          onCancel={hideModal}
+          hideFooter
+        >
           <ul className={styles.parameters}>
             <li>
               <div className={styles.name}>Port</div>
@@ -244,7 +267,9 @@ export default class ClusterDetail extends Component {
 
   handleCluster = () => {
     const { clusterStore } = this.props;
-    const { clusterId, clusterIds, modalType, operateType } = clusterStore;
+    const {
+      clusterId, clusterIds, modalType, operateType
+    } = clusterStore;
     const ids = operateType === 'multiple' ? clusterIds.toJSON() : [clusterId];
 
     switch (modalType) {
@@ -275,7 +300,9 @@ export default class ClusterDetail extends Component {
   };
 
   renderHandleMenu = () => {
-    const { clusterStore, clusterDetailStore, runtimeStore, t } = this.props;
+    const {
+      clusterStore, clusterDetailStore, runtimeStore, t
+    } = this.props;
     const { showOperateCluster } = clusterStore;
     const { cluster_id, status } = clusterDetailStore.cluster;
 
@@ -290,8 +317,10 @@ export default class ClusterDetail extends Component {
         return (
           <Fragment>
             {status === 'deleted' && renderBtn('cease', t('Cease cluster'))}
-            {status !== 'deleted' && renderBtn('rollback', t('Rollback cluster'))}
-            {status !== 'deleted' && renderBtn('update_env', t('Update cluster env'))}
+            {status !== 'deleted'
+              && renderBtn('rollback', t('Rollback cluster'))}
+            {status !== 'deleted'
+              && renderBtn('update_env', t('Update cluster env'))}
             {status !== 'deleted' && renderBtn('upgrade', t('Upgrade cluster'))}
           </Fragment>
         );
@@ -308,7 +337,7 @@ export default class ClusterDetail extends Component {
     return (
       <div className="operate-menu">
         {renderMenuBtns()}
-        {/*<span onClick={() => showOperateCluster(cluster_id, 'resize')}>{t('Resize cluster')}</span>*/}
+        {/* <span onClick={() => showOperateCluster(cluster_id, 'resize')}>{t('Resize cluster')}</span> */}
         {status !== 'deleted' && (
           <span onClick={() => showOperateCluster(cluster_id, 'delete')}>
             {t('Delete cluster')}
@@ -330,23 +359,11 @@ export default class ClusterDetail extends Component {
       t
     } = this.props;
 
-    const { isLoading } = this.state;
     const { cluster, clusterJobs } = clusterDetailStore;
     const { runtimeDetail, isK8s } = runtimeStore;
-
     const { isNormal, isDev } = user;
-    //
-    // const tableProps = {
-    //   runtimeStore,
-    //   clusterStore,
-    //   clusterDetailStore,
-    //   t
-    // };
-    // const actionProps = {
-    //   clusterStore,
-    //   appVersionStore,
-    //   t
-    // };
+
+    const { isRuntimeTypeFetched } = this.state;
 
     const linkPath = isDev
       ? `My Apps>Test>Clusters>${cluster.name}`
@@ -372,7 +389,10 @@ export default class ClusterDetail extends Component {
                 userName={_.get(userStore.userDetail, 'username', '')}
               />
               {cluster.status !== 'deleted' && (
-                <Popover className="operation" content={this.renderHandleMenu()}>
+                <Popover
+                  className="operation"
+                  content={this.renderHandleMenu()}
+                >
                   <Icon name="more" />
                 </Popover>
               )}
@@ -390,7 +410,7 @@ export default class ClusterDetail extends Component {
           </Section>
 
           <Section size={8}>
-            <Loading isLoading={isLoading}>
+            <Loading isLoading={!isRuntimeTypeFetched}>
               <Panel>{isK8s ? <Helm cluster={cluster} /> : <VMbase cluster={cluster} />}</Panel>
             </Loading>
           </Section>

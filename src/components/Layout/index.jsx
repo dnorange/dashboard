@@ -3,13 +3,15 @@ import PropTypes from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import classnames from 'classnames';
 import { inject } from 'mobx-react';
-import { noop, clone, isEmpty, get } from 'lodash';
+import {
+  noop, clone, isEmpty, get
+} from 'lodash';
 
-import { Notification } from 'components/Base';
+import { Notification, Icon } from 'components/Base';
 import Loading from 'components/Loading';
+import { getScrollTop } from 'src/utils';
 import TitleBanner from './TitleBanner';
 import SideNav from './SideNav';
-import { getScrollTop } from 'src/utils';
 
 import styles from './index.scss';
 
@@ -19,16 +21,17 @@ import styles from './index.scss';
 }))
 class Layout extends Component {
   static propTypes = {
-    className: PropTypes.string,
-    children: PropTypes.node,
-    noNotification: PropTypes.bool,
     backBtn: PropTypes.node,
-    isLoading: PropTypes.bool,
-    loadClass: PropTypes.string,
-    listenToJob: PropTypes.func,
-    title: PropTypes.string,
+    children: PropTypes.node,
+    className: PropTypes.string,
     hasSearch: PropTypes.bool,
-    isHome: PropTypes.bool
+    isHome: PropTypes.bool,
+    isLoading: PropTypes.bool,
+    listenToJob: PropTypes.func,
+    loadClass: PropTypes.string,
+    noNotification: PropTypes.bool,
+    pageTitle: PropTypes.string,
+    title: PropTypes.string
   };
 
   static defaultProps = {
@@ -36,19 +39,16 @@ class Layout extends Component {
     backBtn: null,
     listenToJob: noop,
     title: '',
+    pageTitle: '',
     hasSearch: false,
     isHome: false
-  };
-
-  state = {
-    isScroll: false
   };
 
   componentDidMount() {
     const { sock, listenToJob } = this.props;
 
-    sock &&
-      sock.on('ops-resource', (payload = {}) => {
+    sock
+      && sock.on('ops-resource', (payload = {}) => {
         const { type } = payload;
         const { resource = {} } = payload;
 
@@ -58,8 +58,6 @@ class Layout extends Component {
           ...resource
         });
       });
-
-    window.onscroll = this.handleScroll;
   }
 
   componentWillUnmount() {
@@ -68,13 +66,11 @@ class Layout extends Component {
     if (sock && !isEmpty(sock._events)) {
       sock._events = {};
     }
-
-    window.onscroll = null;
   }
 
-  handleScroll = async () => {
-    const scrollTop = getScrollTop();
-    scrollTop > 0 ? this.setState({ isScroll: true }) : this.setState({ isScroll: false });
+  goBack = () => {
+    const { history } = this.props;
+    history.goBack();
   };
 
   render() {
@@ -88,14 +84,15 @@ class Layout extends Component {
       hasSearch,
       title,
       isHome,
-      match
+      match,
+      pageTitle
     } = this.props;
 
     const { isNormal, isDev, isAdmin } = this.props.user;
     const hasMenu = (isDev || isAdmin) && !isHome;
-    const { isScroll } = this.state;
     const paths = ['/dashboard', '/profile', '/ssh_keys', '/dev/apps'];
-    const hasSubNav = hasMenu && !paths.includes(match.path);
+    const isCenterPage = Boolean(pageTitle); // detail page, only one level menu
+    const hasSubNav = hasMenu && !isCenterPage && !paths.includes(match.path);
 
     return (
       <div
@@ -104,17 +101,38 @@ class Layout extends Component {
           className,
           { [styles.hasMenu]: hasSubNav },
           { [styles.hasNav]: hasMenu && !hasSubNav },
-          { [styles.hasBack]: Boolean(backBtn) }
+          { [styles.hasBack]: Boolean(backBtn) },
+          { [styles.detailPage]: isCenterPage }
         )}
       >
         {noNotification ? null : <Notification />}
         {backBtn}
 
-        {hasMenu && <SideNav isScroll={isScroll} hasSubNav={hasSubNav} />}
-        {isNormal && !isHome && <TitleBanner title={title} hasSearch={hasSearch} />}
+        {hasMenu && <SideNav hasSubNav={hasSubNav} />}
+        {isNormal
+          && !isHome && <TitleBanner title={title} hasSearch={hasSearch} />}
+
+        {isCenterPage && (
+          <div className={styles.pageTitle}>
+            <div className={styles.title}>
+              <Icon
+                onClick={this.goBack}
+                name="previous"
+                size={20}
+                type="dark"
+                className={styles.icon}
+              />
+              {pageTitle}
+            </div>
+          </div>
+        )}
 
         <Loading isLoading={isLoading} className={styles[loadClass]}>
-          {children}
+          {isCenterPage ? (
+            <div className={styles.centerPage}>{children}</div>
+          ) : (
+            children
+          )}
         </Loading>
       </div>
     );

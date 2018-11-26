@@ -6,9 +6,9 @@ import styles from './index.scss';
 
 export default class Loading extends Component {
   static propTypes = {
+    children: PropTypes.node,
     className: PropTypes.string,
-    isLoading: PropTypes.bool,
-    children: PropTypes.node
+    isLoading: PropTypes.bool
   };
 
   static defaultProps = {
@@ -26,14 +26,10 @@ export default class Loading extends Component {
               <div className={styles.loader} />
             </div>
           </div>
-          {children}
         </Fragment>
       );
     }
 
-    if (!children) {
-      return null;
-    }
     return <Fragment>{children}</Fragment>;
   }
 }

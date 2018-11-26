@@ -1,13 +1,14 @@
 import React from 'react';
-import { configure, mount, shallow, render } from 'enzyme';
+import {
+  configure, mount, shallow, render
+} from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 import toJson from 'enzyme-to-json';
 
 configure({ adapter: new Adapter() });
 
-global.requestAnimationFrame =
-  global.requestAnimationFrame ||
-  function(cb) {
+global.requestAnimationFrame = global.requestAnimationFrame
+  || function (cb) {
     return setTimeout(cb, 0);
   };
 
@@ -33,7 +34,7 @@ global.document.createRange = () => ({
 
 global.window.scroll = () => {};
 
-jest.mock('CodeMirror', () => <div />);
+jest.mock('react-codemirror', () => <div />);
 jest.mock('react-i18next', () => ({
   // this mock makes sure any components using the translate HoC receive the t function as a prop
   translate: () => Component => {

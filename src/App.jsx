@@ -1,11 +1,14 @@
-import React, { Fragment, Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import PropTypes from 'prop-types';
 
 import { Provider } from 'mobx-react';
 import { withRouter } from 'react-router';
-import { BrowserRouter, Switch, Route, Redirect } from 'react-router-dom';
+import {
+  BrowserRouter, Switch, Route, Redirect
+} from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
 
+import LazyLoad from 'components/LazyLoad';
 import Header from 'components/Header';
 import Footer from 'components/Footer';
 
@@ -13,14 +16,12 @@ import WrapComp from './routes/wrapper';
 
 import './scss/index.scss';
 
-const LazyLoad = ({ children }) => <Suspense fallback={<div>Loading..</div>}>{children}</Suspense>;
-
 class App extends React.Component {
   static propTypes = {
-    routes: PropTypes.array.isRequired,
-    store: PropTypes.object.isRequired,
     i18n: PropTypes.object,
-    sock: PropTypes.any
+    routes: PropTypes.array.isRequired,
+    sock: PropTypes.any,
+    store: PropTypes.object.isRequired
   };
 
   static defaultProps = {
@@ -65,7 +66,9 @@ class App extends React.Component {
   }
 
   render() {
-    const { routes, store, sock, i18n } = this.props;
+    const {
+      routes, store, sock, i18n
+    } = this.props;
 
     return (
       <I18nextProvider i18n={i18n}>
@@ -79,7 +82,8 @@ class App extends React.Component {
                       key={i}
                       exact={route.exact}
                       path={route.path}
-                      render={({ match }) => this.renderRoute(match, route, store)}
+                      render={({ match }) => this.renderRoute(match, route, store)
+                      }
                     />
                   ))}
                 </Switch>

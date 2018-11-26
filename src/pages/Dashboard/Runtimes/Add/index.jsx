@@ -3,11 +3,14 @@ import { observer, inject } from 'mobx-react';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames';
 import { translate } from 'react-i18next';
-import get from 'lodash/get';
+import _ from 'lodash';
 
-import { Radio, Button, Input, Select } from 'components/Base';
+import {
+  Radio, Button, Input, Select
+} from 'components/Base';
 import Layout, { BackBtn, CreateResource, BreadCrumb } from 'components/Layout';
 import TodoList from 'components/TodoList';
+import providers from '../providers';
 
 import styles from './index.scss';
 
@@ -33,12 +36,15 @@ export default class RuntimeAdd extends Component {
       await runtimeStore.fetch(runtimeId);
       runtimeCreateStore.setRuntime(runtimeStore.runtimeDetail);
     } else {
-      //runtimeCreateStore.reset();
+      // runtimeCreateStore.reset();
     }
   }
 
   componentDidUpdate() {
-    if (get(this.store, 'runtimeCreated.runtime_id') && !this.store.isLoading) {
+    if (
+      _.get(this.store, 'runtimeCreated.runtime_id')
+      && !this.store.isLoading
+    ) {
       history.back();
     }
   }
@@ -86,7 +92,9 @@ export default class RuntimeAdd extends Component {
           <div className={styles.rightShow}>
             <p>
               <label className={styles.inputTitle}>{t('Access Key ID')}</label>
-              <label className={styles.inputTitle}>{t('Secret Access Key')}</label>
+              <label className={styles.inputTitle}>
+                {t('Secret Access Key')}
+              </label>
             </p>
             <Fragment>
               <Input
@@ -101,7 +109,10 @@ export default class RuntimeAdd extends Component {
                 onChange={this.store.changeSecretKey}
                 onBlur={getRuntimeZone}
               />
-              <Button className={styles.add} onClick={this.store.handleValidateCredential}>
+              <Button
+                className={styles.add}
+                onClick={this.store.handleValidateCredential}
+              >
                 {t('Validate')}
               </Button>
             </Fragment>
@@ -133,7 +144,9 @@ export default class RuntimeAdd extends Component {
     return (
       <Fragment>
         <div>
-          <label className={classNames(styles.name, styles.textareaName)}>{t('kubeconfig')}</label>
+          <label className={classNames(styles.name, styles.textareaName)}>
+            {t('kubeconfig')}
+          </label>
           <textarea
             className={styles.textarea}
             name="runtime_credential"
@@ -158,7 +171,14 @@ export default class RuntimeAdd extends Component {
 
   renderForm() {
     const { t } = this.props;
-    const { runtimeId, name, provider, labels, description, isLoading } = this.store;
+    const {
+      runtimeId,
+      name,
+      provider,
+      labels,
+      description,
+      isLoading
+    } = this.store;
 
     return (
       <form onSubmit={this.handleSubmit} className={styles.createForm}>
@@ -182,20 +202,20 @@ export default class RuntimeAdd extends Component {
             onChange={this.store.changeProvider}
             className={styles.radioGroup}
           >
-            <Radio value="qingcloud" disabled={Boolean(runtimeId)}>
-              QingCloud
-            </Radio>
-            <Radio value="aws" disabled={Boolean(runtimeId)}>
-              AWS
-            </Radio>
-            <Radio value="kubernetes" disabled={Boolean(runtimeId)}>
-              Kubernetes
-            </Radio>
+            {_.map(providers, (label, key) => (
+              <Radio value={key} disabled={Boolean(runtimeId)} key={key}>
+                {label}
+              </Radio>
+            ))}
           </Radio.Group>
         </div>
-        {provider !== 'kubernetes' ? this.renderUrlAndZone() : this.renderCredential()}
+        {provider !== 'kubernetes'
+          ? this.renderUrlAndZone()
+          : this.renderCredential()}
         <div className={styles.textareaItem}>
-          <label className={classNames(styles.name, styles.textareaName)}>{t('Description')}</label>
+          <label className={classNames(styles.name, styles.textareaName)}>
+            {t('Description')}
+          </label>
           <textarea
             className={styles.textarea}
             name="description"
@@ -205,7 +225,9 @@ export default class RuntimeAdd extends Component {
           />
         </div>
         <div>
-          <label className={classNames(styles.name, styles.fl)}>{t('Labels')}</label>
+          <label className={classNames(styles.name, styles.fl)}>
+            {t('Labels')}
+          </label>
           <TodoList
             labels={labels && labels.slice()}
             onRemove={this.store.removeLabel}
@@ -213,14 +235,21 @@ export default class RuntimeAdd extends Component {
             labelType="label"
           />
           <Button
-            className={classNames(styles.add, { [styles.addBottom]: labels.length })}
+            className={classNames(styles.add, {
+              [styles.addBottom]: labels.length
+            })}
             onClick={this.store.addLabel}
           >
             {t('Add')}
           </Button>
         </div>
         <div className={styles.submitBtnGroup}>
-          <Button type={`primary`} disabled={isLoading} className={`primary`} htmlType="submit">
+          <Button
+            type={`primary`}
+            disabled={isLoading}
+            className={`primary`}
+            htmlType="submit"
+          >
             {t('Confirm')}
           </Button>
           <Button onClick={() => history.back()}>{t('Cancel')}</Button>
@@ -244,7 +273,9 @@ export default class RuntimeAdd extends Component {
     const { runtimeId } = this.store;
     const title = runtimeId ? t('Modify Runtime') : t('Create Runtime');
     const { isNormal, isDev, isAdmin } = user;
-    const linkPath = isDev ? `My Apps>Runtimes>${title}` : `Platform>Runtimes>${title}`;
+    const linkPath = isDev
+      ? `My Apps>Runtimes>${title}`
+      : `Platform>Runtimes>${title}`;
 
     return (
       <Layout

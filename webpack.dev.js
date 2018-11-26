@@ -1,5 +1,6 @@
 const { resolve } = require('path');
 const webpack = require('webpack');
+const webpackNotifier = require('webpack-notifier');
 const postCssOptions = require('./config/postcss.options');
 
 module.exports = {
@@ -15,7 +16,6 @@ module.exports = {
     publicPath: '/build/',
     pathinfo: false
   },
-  // profile: true,
   performance: {
     hints: 'warning'
   },
@@ -32,6 +32,15 @@ module.exports = {
           }
         ],
         include: [resolve(__dirname, 'src'), resolve(__dirname, 'lib')]
+      },
+      {
+        test: /\.jsx?$/,
+        enforce: 'pre',
+        exclude: /node_modules/,
+        loader: 'eslint-loader',
+        options: {
+          fix: true
+        }
       },
       {
         test: /\.css$/,
@@ -66,10 +75,19 @@ module.exports = {
     alias: {
       scss: resolve(__dirname, 'src/scss')
     },
-    modules: [resolve(__dirname, 'src'), resolve(__dirname, 'lib'), 'node_modules']
+    modules: [
+      resolve(__dirname, 'src'),
+      resolve(__dirname, 'lib'),
+      'node_modules'
+    ]
   },
   plugins: [
     // new webpack.HotModuleReplacementPlugin(),
+    new webpackNotifier({
+      title: `Openpitrix dashboard`,
+      alwaysNotify: true,
+      excludeWarnings: true
+    }),
     new webpack.DefinePlugin({
       'process.env.BROWSER': true,
       'process.env.NODE_ENV': JSON.stringify('development')
